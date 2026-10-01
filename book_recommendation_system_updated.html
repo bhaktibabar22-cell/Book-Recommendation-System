@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BookBuddy AI - Book Recommendation System</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial, sans-serif;background:#f6f7fb;color:#202438;line-height:1.5}
+header{background:linear-gradient(135deg,#6c4df6,#9b6cff);color:white;padding:22px 6%;display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap}
+.logo{font-size:26px;font-weight:800}.tag{opacity:.9;font-size:13px}
+.container{max-width:1150px;margin:auto;padding:28px 18px}
+.hero{background:white;border-radius:22px;padding:30px;box-shadow:0 8px 25px #0000000c;margin-bottom:22px}
+.hero h1{font-size:34px;margin-bottom:8px}.hero p{color:#697086}
+.controls{display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:12px;margin-top:22px}
+input,select,button{padding:13px 14px;border:1px solid #ddd;border-radius:12px;font-size:15px}
+input:focus,select:focus{outline:2px solid #b9a9ff;border-color:#8064ff}
+button{background:#6c4df6;color:white;border:none;cursor:pointer;font-weight:700}
+button:hover{transform:translateY(-1px);filter:brightness(.97)}
+.secondary{background:#eeeafd;color:#5540c7}
+.section-title{display:flex;justify-content:space-between;align-items:center;margin:25px 0 14px}
+.section-title h2{font-size:23px}
+.count{font-size:13px;color:#72798d}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.card{background:white;border-radius:18px;padding:20px;box-shadow:0 7px 22px #0000000a;transition:.2s}
+.card:hover{transform:translateY(-3px);box-shadow:0 10px 28px #00000012}
+.cover{height:155px;border-radius:14px;background:linear-gradient(135deg,#dcd3ff,#f0ecff);display:flex;align-items:center;justify-content:center;font-size:52px;margin-bottom:16px}
+.card h3{font-size:19px;margin-bottom:4px}.author{color:#6c4df6;font-weight:700;font-size:14px}
+.meta{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.badge{background:#f0eefb;padding:5px 9px;border-radius:20px;font-size:12px}
+.rating{color:#f39a20;font-weight:700}
+.desc{font-size:13px;color:#687086;margin:10px 0 15px}
+.actions{display:flex;gap:8px}.actions button{flex:1;padding:10px}
+.empty{text-align:center;background:white;border-radius:18px;padding:45px;color:#777}
+.modal{display:none;position:fixed;inset:0;background:#0008;align-items:center;justify-content:center;padding:20px;z-index:5}
+.modal-box{background:white;max-width:520px;width:100%;border-radius:20px;padding:25px;position:relative}
+.close{position:absolute;right:15px;top:12px;background:#eee;color:#333;width:35px;height:35px;padding:0}
+.modal-box h2{margin-bottom:8px}.modal-box p{margin:9px 0;color:#626a7c}
+footer{text-align:center;padding:28px;color:#777;font-size:13px}
+@media(max-width:850px){.controls{grid-template-columns:1fr 1fr}.grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.controls{grid-template-columns:1fr}.grid{grid-template-columns:1fr}.hero h1{font-size:27px}}
+</style>
+</head>
+<body>
+<header>
+  <div><div class="logo">📚 BookBuddy AI</div><div class="tag">Discover your next great read</div></div>
+  <div>🎓 BCA Project • Feature Set B</div>
+</header>
+
+<main class="container">
+<section class="hero">
+  <h1>Find a book you'll love ✨</h1>
+  <p>Search books, filter by genre or author, and explore recommendations with ratings and details. 📚 60+ books included.</p>
+  <div class="controls">
+    <input id="search" type="text" placeholder="🔍 Search by book title or author...">
+    <select id="genre"><option value="all">All Genres</option>
+<option>Fiction</option><option>Mystery</option><option>Thriller</option><option>Romance</option>
+<option>Fantasy</option><option>Science Fiction</option><option>Horror</option><option>Adventure</option>
+<option>Historical</option><option>Biography</option><option>Autobiography</option><option>Self-help</option>
+<option>Psychology</option><option>Philosophy</option><option>Business</option><option>Economics</option>
+<option>Classic</option><option>Literature</option><option>Children</option><option>Productivity</option>
+<option>Programming</option><option>Technology</option><option>Artificial Intelligence</option>
+<option>Machine Learning</option><option>Data Science</option><option>Science</option></select>
+    <select id="author"><option value="all">All Authors</option></select>
+    <button onclick="recommend()">Recommend</button>
+  </div>
+</section>
+
+<div class="section-title">
+  <h2>📖 Recommended Books</h2>
+  <span class="count" id="count"></span>
+</div>
+<section id="books" class="grid"></section>
+</main>
+
+<div class="modal" id="modal">
+  <div class="modal-box">
+    <button class="close" onclick="closeModal()">×</button>
+    <h2 id="modalTitle"></h2>
+    <div id="modalContent"></div>
+  </div>
+</div>
+
+<footer>BookBuddy AI • Simple Book Recommendation System • BCA College Project</footer>
+
+<script>
+const books=[
+{id:1,title:"The Alchemist",author:"Paulo Coelho",genre:"Fiction",rating:4.7,year:1988,emoji:"🧭",desc:"A young shepherd follows his dreams and discovers the meaning of his journey."},
+{id:2,title:"Harry Potter and the Philosopher's Stone",author:"J.K. Rowling",genre:"Fantasy",rating:4.8,year:1997,emoji:"🪄",desc:"A young wizard begins his magical journey at Hogwarts School of Witchcraft and Wizardry."},
+{id:3,title:"The Hobbit",author:"J.R.R. Tolkien",genre:"Fantasy",rating:4.8,year:1937,emoji:"🐉",desc:"Bilbo Baggins joins an unexpected adventure filled with courage, friendship and dragons."},
+{id:4,title:"Atomic Habits",author:"James Clear",genre:"Self-help",rating:4.6,year:2018,emoji:"🌱",desc:"A practical guide to building good habits and making small changes that create lasting results."},
+{id:5,title:"Wings of Fire",author:"A.P.J. Abdul Kalam",genre:"Biography",rating:4.7,year:1999,emoji:"🚀",desc:"The inspiring autobiography of Dr. A.P.J. Abdul Kalam and his journey from childhood to science leadership."},
+{id:6,title:"Ikigai",author:"Héctor García",genre:"Self-help",rating:4.4,year:2016,emoji:"🌸",desc:"An introduction to the Japanese concept of finding purpose, balance and meaning in everyday life."},
+{id:7,title:"1984",author:"George Orwell",genre:"Fiction",rating:4.5,year:1949,emoji:"👁️",desc:"A classic dystopian novel exploring surveillance, freedom and the power of information."},
+{id:8,title:"The Silent Patient",author:"Alex Michaelides",genre:"Mystery",rating:4.3,year:2019,emoji:"🔎",desc:"A psychological mystery surrounding a woman who stops speaking after a shocking crime."},
+{id:9,title:"Clean Code",author:"Robert C. Martin",genre:"Technology",rating:4.6,year:2008,emoji:"💻",desc:"A practical software-development guide focused on readable, maintainable and professional code."},
+{id:10,title:"Pride and Prejudice",author:"Jane Austen",genre:"Romance",rating:4.6,year:1813,emoji:"💞",desc:"A classic story of love, family, misunderstandings and social expectations."},
+{id:11,title:"Romeo and Juliet",author:"William Shakespeare",genre:"Romance",rating:4.5,year:1597,emoji:"🌹",desc:"A famous tragic love story about two young lovers from rival families."},
+{id:12,title:"Great Expectations",author:"Charles Dickens",genre:"Classic",rating:4.5,year:1861,emoji:"📜",desc:"A young orphan grows through ambition, friendship and unexpected fortune."},
+{id:13,title:"To Kill a Mockingbird",author:"Harper Lee",genre:"Historical",rating:4.7,year:1960,emoji:"⚖️",desc:"A powerful story about childhood, justice, courage and social inequality."},
+{id:14,title:"The Great Gatsby",author:"F. Scott Fitzgerald",genre:"Classic",rating:4.4,year:1925,emoji:"🥂",desc:"A mysterious millionaire and a dream of love in the Jazz Age."},
+{id:15,title:"Jane Eyre",author:"Charlotte Brontë",genre:"Romance",rating:4.6,year:1847,emoji:"🌿",desc:"An independent young woman searches for love, identity and belonging."},
+{id:16,title:"The Book Thief",author:"Markus Zusak",genre:"Historical",rating:4.6,year:2005,emoji:"📖",desc:"A young girl discovers the power of words during World War II."},
+{id:17,title:"The Kite Runner",author:"Khaled Hosseini",genre:"Historical",rating:4.6,year:2003,emoji:"🪁",desc:"A moving story of friendship, guilt, family and redemption."},
+{id:18,title:"The Hunger Games",author:"Suzanne Collins",genre:"Science Fiction",rating:4.7,year:2008,emoji:"🏹",desc:"A young girl enters a dangerous competition in a dystopian society."},
+{id:19,title:"Divergent",author:"Veronica Roth",genre:"Science Fiction",rating:4.4,year:2011,emoji:"🔺",desc:"A teenager discovers her identity in a society divided by personality groups."},
+{id:20,title:"The Fault in Our Stars",author:"John Green",genre:"Romance",rating:4.5,year:2012,emoji:"⭐",desc:"Two teenagers meet and find love while facing difficult circumstances."},
+{id:21,title:"It Ends with Us",author:"Colleen Hoover",genre:"Romance",rating:4.4,year:2016,emoji:"❤️",desc:"A contemporary story about love, choices and difficult relationships."},
+{id:22,title:"The Da Vinci Code",author:"Dan Brown",genre:"Thriller",rating:4.4,year:2003,emoji:"🔐",desc:"A mystery adventure involving symbols, secrets and a historical conspiracy."},
+{id:23,title:"Gone Girl",author:"Gillian Flynn",genre:"Thriller",rating:4.4,year:2012,emoji:"🕵️",desc:"A psychological thriller about a missing wife and a complicated marriage."},
+{id:24,title:"The Girl on the Train",author:"Paula Hawkins",genre:"Thriller",rating:4.2,year:2015,emoji:"🚆",desc:"A woman observing a couple from a train becomes involved in a mystery."},
+{id:25,title:"Murder on the Orient Express",author:"Agatha Christie",genre:"Mystery",rating:4.7,year:1934,emoji:"🚂",desc:"Detective Hercule Poirot investigates a murder aboard a luxury train."},
+{id:26,title:"And Then There Were None",author:"Agatha Christie",genre:"Mystery",rating:4.6,year:1939,emoji:"🏝️",desc:"Ten strangers are trapped on an island where mysterious events unfold."},
+{id:27,title:"Sherlock Holmes: The Hound of the Baskervilles",author:"Arthur Conan Doyle",genre:"Mystery",rating:4.6,year:1902,emoji:"🔍",desc:"Sherlock Holmes investigates a legendary curse and a mysterious death."},
+{id:28,title:"The Shining",author:"Stephen King",genre:"Horror",rating:4.4,year:1977,emoji:"🏨",desc:"A family faces terrifying supernatural events at an isolated hotel."},
+{id:29,title:"Dracula",author:"Bram Stoker",genre:"Horror",rating:4.5,year:1897,emoji:"🧛",desc:"A classic gothic tale of Count Dracula and the people who confront him."},
+{id:30,title:"Frankenstein",author:"Mary Shelley",genre:"Horror",rating:4.5,year:1818,emoji:"⚡",desc:"A scientist creates life and faces the consequences of his experiment."},
+{id:31,title:"The Chronicles of Narnia",author:"C.S. Lewis",genre:"Fantasy",rating:4.7,year:1950,emoji:"🦁",desc:"Children enter a magical world filled with adventure and wonder."},
+{id:32,title:"The Lord of the Rings",author:"J.R.R. Tolkien",genre:"Fantasy",rating:4.9,year:1954,emoji:"💍",desc:"A group of companions begins a dangerous journey to destroy a powerful ring."},
+{id:33,title:"Percy Jackson and the Olympians",author:"Rick Riordan",genre:"Fantasy",rating:4.7,year:2005,emoji:"⚡",desc:"A teenager discovers that Greek mythology is connected to his life."},
+{id:34,title:"The Name of the Wind",author:"Patrick Rothfuss",genre:"Fantasy",rating:4.5,year:2007,emoji:"🎵",desc:"A legendary young man tells the story of his extraordinary life."},
+{id:35,title:"The Martian",author:"Andy Weir",genre:"Science Fiction",rating:4.7,year:2011,emoji:"🚀",desc:"An astronaut uses science and engineering to survive alone on Mars."},
+{id:36,title:"Dune",author:"Frank Herbert",genre:"Science Fiction",rating:4.6,year:1965,emoji:"🏜️",desc:"A young nobleman becomes part of an epic struggle on a desert planet."},
+{id:37,title:"Ready Player One",author:"Ernest Cline",genre:"Science Fiction",rating:4.4,year:2011,emoji:"🎮",desc:"A teenager enters a virtual world-wide treasure hunt."},
+{id:38,title:"Sapiens",author:"Yuval Noah Harari",genre:"History",rating:4.6,year:2011,emoji:"🧬",desc:"An overview of human history, society and the development of civilization."},
+{id:39,title:"The Diary of a Young Girl",author:"Anne Frank",genre:"Biography",rating:4.7,year:1947,emoji:"📔",desc:"Anne Frank records her life and thoughts while hiding during World War II."},
+{id:40,title:"Steve Jobs",author:"Walter Isaacson",genre:"Biography",rating:4.5,year:2011,emoji:"💡",desc:"A biography exploring the life and career of Apple co-founder Steve Jobs."},
+{id:41,title:"Long Walk to Freedom",author:"Nelson Mandela",genre:"Autobiography",rating:4.7,year:1994,emoji:"🕊️",desc:"Nelson Mandela describes his life and struggle against apartheid."},
+{id:42,title:"Becoming",author:"Michelle Obama",genre:"Autobiography",rating:4.6,year:2018,emoji:"🌸",desc:"Michelle Obama shares stories from her childhood, career and public life."},
+{id:43,title:"Rich Dad Poor Dad",author:"Robert Kiyosaki",genre:"Business",rating:4.4,year:1997,emoji:"💰",desc:"A popular personal-finance book about money, assets and financial thinking."},
+{id:44,title:"The Psychology of Money",author:"Morgan Housel",genre:"Economics",rating:4.6,year:2020,emoji:"💵",desc:"Explores how emotions and behavior influence financial decisions."},
+{id:45,title:"Think and Grow Rich",author:"Napoleon Hill",genre:"Self-help",rating:4.5,year:1937,emoji:"🧠",desc:"A classic personal-development book about goals, mindset and achievement."},
+{id:46,title:"How to Win Friends and Influence People",author:"Dale Carnegie",genre:"Psychology",rating:4.6,year:1936,emoji:"🤝",desc:"Practical ideas for communication, relationships and dealing with people."},
+{id:47,title:"The 7 Habits of Highly Effective People",author:"Stephen R. Covey",genre:"Self-help",rating:4.6,year:1989,emoji:"🎯",desc:"A guide to developing effective habits for personal and professional life."},
+{id:48,title:"Deep Work",author:"Cal Newport",genre:"Productivity",rating:4.5,year:2016,emoji:"🎯",desc:"Strategies for focused work and reducing distractions in a busy world."},
+{id:49,title:"Python Crash Course",author:"Eric Matthes",genre:"Programming",rating:4.7,year:2015,emoji:"🐍",desc:"A beginner-friendly introduction to Python programming and projects."},
+{id:50,title:"Automate the Boring Stuff with Python",author:"Al Sweigart",genre:"Programming",rating:4.7,year:2015,emoji:"⚙️",desc:"Learn Python by automating repetitive everyday computer tasks."},
+{id:51,title:"Artificial Intelligence: A Modern Approach",author:"Stuart Russell & Peter Norvig",genre:"Artificial Intelligence",rating:4.7,year:2021,emoji:"🤖",desc:"A comprehensive introduction to artificial intelligence concepts and methods."},
+{id:52,title:"Hands-On Machine Learning with Scikit-Learn, Keras & TensorFlow",author:"Aurélien Géron",genre:"Machine Learning",rating:4.7,year:2022,emoji:"🤖",desc:"A practical guide to building and understanding machine-learning systems."},
+{id:53,title:"Data Science for Business",author:"Foster Provost & Tom Fawcett",genre:"Data Science",rating:4.5,year:2013,emoji:"📊",desc:"Explains important data-science concepts and how they support business decisions."},
+{id:54,title:"The Pragmatic Programmer",author:"Andrew Hunt & David Thomas",genre:"Programming",rating:4.7,year:1999,emoji:"💻",desc:"Practical software-development principles for professional programmers."},
+{id:55,title:"A Brief History of Time",author:"Stephen Hawking",genre:"Science",rating:4.5,year:1988,emoji:"🌌",desc:"An accessible exploration of time, space, cosmology and the universe."},
+{id:56,title:"The Selfish Gene",author:"Richard Dawkins",genre:"Science",rating:4.4,year:1976,emoji:"🧬",desc:"An influential explanation of evolution from a gene-centered perspective."},
+{id:57,title:"The Old Man and the Sea",author:"Ernest Hemingway",genre:"Literature",rating:4.4,year:1952,emoji:"🎣",desc:"A short classic about an old fisherman, struggle and perseverance."},
+{id:58,title:"The Little Prince",author:"Antoine de Saint-Exupéry",genre:"Children",rating:4.8,year:1943,emoji:"🌟",desc:"A poetic tale about friendship, love, imagination and seeing beyond appearances."},
+{id:59,title:"Charlotte’s Web",author:"E.B. White",genre:"Children",rating:4.7,year:1952,emoji:"🕷️",desc:"A heartwarming friendship develops between a pig and a spider."},
+{id:60,title:"The Adventures of Tom Sawyer",author:"Mark Twain",genre:"Adventure",rating:4.5,year:1876,emoji:"⛵",desc:"A lively adventure following a clever boy and his childhood experiences."},
+{id:61,title:"Around the World in Eighty Days",author:"Jules Verne",genre:"Adventure",rating:4.5,year:1872,emoji:"🌍",desc:"A daring journey around the world against a strict deadline."},
+{id:62,title:"The Art of War",author:"Sun Tzu",genre:"Philosophy",rating:4.5,year:-500,emoji:"⚔️",desc:"Ancient strategic ideas about planning, leadership and conflict."},
+{id:63,title:"Meditations",author:"Marcus Aurelius",genre:"Philosophy",rating:4.6,year:180,emoji:"🏛️",desc:"Reflections on discipline, resilience, responsibility and living well."}
+];
+
+const genre=document.getElementById("genre"), author=document.getElementById("author"), search=document.getElementById("search");
+[...new Set(books.map(b=>b.genre))].sort().forEach(g=>{
+  if(![...genre.options].some(o=>o.value===g)) genre.innerHTML+=`<option>${g}</option>`;
+});
+[...new Set(books.map(b=>b.author))].sort().forEach(a=>author.innerHTML+=`<option>${a}</option>`);
+
+function render(list=books){
+ document.getElementById("count").textContent=`${list.length} book${list.length!==1?"s":""} found`;
+ const box=document.getElementById("books");
+ if(!list.length){box.innerHTML='<div class="empty" style="grid-column:1/-1">😔 No books found. Try another search or filter.</div>';return}
+ box.innerHTML=list.map(b=>`
+ <article class="card">
+   <div class="cover">${b.emoji}</div>
+   <h3>${b.title}</h3><div class="author">by ${b.author}</div>
+   <div class="meta"><span class="badge">${b.genre}</span><span class="badge">${b.year}</span><span class="rating">⭐ ${b.rating}</span></div>
+   <p class="desc">${b.desc}</p>
+   <div class="actions"><button onclick="details(${b.id})">View Details</button><button class="secondary" onclick="alert('Added “${b.title.replaceAll("'","\\'")}” to your reading list! 📚')">+ Save</button></div>
+ </article>`).join("");
+}
+function recommend(){
+ const q=search.value.toLowerCase().trim(), g=genre.value, a=author.value;
+ let result=books.filter(b=>(!q||b.title.toLowerCase().includes(q)||b.author.toLowerCase().includes(q))&&(g==="all"||b.genre===g)&&(a==="all"||b.author===a));
+ result.sort((x,y)=>y.rating-x.rating); render(result);
+}
+function details(id){
+ const b=books.find(x=>x.id===id);
+ document.getElementById("modalTitle").textContent=b.title;
+ document.getElementById("modalContent").innerHTML=`<p><b>Author:</b> ${b.author}</p><p><b>Genre:</b> ${b.genre}</p><p><b>Rating:</b> ⭐ ${b.rating}/5</p><p><b>Published:</b> ${b.year}</p><p><b>Description:</b> ${b.desc}</p>`;
+ document.getElementById("modal").style.display="flex";
+}
+function closeModal(){document.getElementById("modal").style.display="none"}
+search.addEventListener("input",recommend); genre.addEventListener("change",recommend); author.addEventListener("change",recommend);
+render();
+</script>
+</body>
+</html>
